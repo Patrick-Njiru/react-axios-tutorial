@@ -1,6 +1,14 @@
 {
-	"contacts": [
-		{ "id": 1, "name": "John Doe", "email": "johndoe@gmail.com" },
-		{ "id": 1, "name": "Jane Doe", "email": "janedoe@gmail.com" }
-	]
+  "contacts": [
+    {
+      "id": "1",
+      "name": "John Doe",
+      "email": "johndoe@gmail.com"
+    },
+    {
+      "id": "e1e009b3-52fd-4250-b64b-ab3eae98380f",
+      "name": "Peter Parker",
+      "email": "peterparker05@gmail.com"
+    }
+  ]
 }

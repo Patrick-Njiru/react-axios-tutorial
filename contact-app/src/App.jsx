@@ -1,21 +1,58 @@
-import PropTypes from "prop-types"
 import { useEffect, useState } from "react"
 import api from "./api/contacts"
-import { FaTrash } from "react-icons/fa"
+import { FaPen, FaTrash } from "react-icons/fa"
+import { BiUserCircle } from "react-icons/bi"
+import AddContact from "./AddContact"
+import UpdateContact from "./UpdateContact"
 
 const App = () => {
-	const [openForm, setOpenForm] = useState(false)
+	const [openAddForm, setOpenAddForm] = useState(false)
+	const [openUpdateForm, setOpenUpdateForm] = useState(false)
 	const [contacts, setContacts] = useState([])
+	const [currentContact, setCurrentContact] = useState({})
 
+	// CREATE
+	const addContact = async (contact) => {
+		console.log(contact)
+		const request = {
+			id: crypto.randomUUID(),
+			...contact,
+		}
+		const response = await api.post("/contacts", request)
+		// console.log(response)
+		setContacts([...contacts, response.data])
+	}
+
+	// READ
 	const retrieveContacts = async () => {
 		const response = await api.get("/contacts")
 		return response.data
 	}
 
+	// UPDATE
+	const updateContact = async (updatedContact) => {
+		const response = await api.put(`/contacts/${updatedContact.id}`, updatedContact)
+
+		// if (response.status === 200) {
+		setContacts(
+			contacts.map((contact) =>
+				contact.id === response.data.id ? { ...response.data } : contact
+			)
+		)
+		// }
+	}
+
+	// DELETE
+	const deleteContact = async (id) => {
+		await api.delete(`/contacts/${id}`)
+
+		setContacts(contacts.filter((contact) => contact.id !== id))
+	}
+
 	useEffect(() => {
 		const getAllContacts = async () => {
 			const allContacts = await retrieveContacts()
-			allContacts ? setContacts(allContacts) : ""
+			if (allContacts) setContacts(allContacts)
 		}
 
 		getAllContacts()
@@ -27,7 +64,7 @@ const App = () => {
 			<section className='flex justify-between'>
 				<h2 className='text-3xl font-medium'>Contact List</h2>
 				<button
-					onClick={() => setOpenForm(true)}
+					onClick={() => setOpenAddForm(true)}
 					type='button'
 					className='bg-blue-500 p-3 py-2 rounded-md text-white hover:bg-blue-600 transition-all duration-300 ease-in-out font-medium'
 				>
@@ -36,70 +73,47 @@ const App = () => {
 			</section>
 			<section>
 				<ol className='space-y-6'>
-					{contacts?.map((contact, index) => (
-						<li key={contact.id} className='flex justify-between items-center'>
-							<div className='flex space-x-3 font-bold'>
-								<span>{index + 1}.</span>
+					{contacts?.map(({ id, name, email }) => (
+						<li key={id} className='flex justify-between items-center'>
+							<div className='flex space-x-3 font-bold items-center'>
+								{/* <span>{index + 1}.</span> */}
+								<span>
+									<BiUserCircle className='text-4xl' />
+								</span>
 								<p className='flex flex-col'>
-									<span className='font-semibold'>{contact.name}</span>
-									<span className='text-blue-500'>{contact.email}</span>
+									<span className='font-semibold'>{name}</span>
+									<span className='text-blue-500'>{email}</span>
 								</p>
 							</div>
-							<button className='text-lg'>
-								<FaTrash />
-							</button>
+							<div className='space-x-6'>
+								<button
+									onClick={() => {
+										setCurrentContact({ id, name, email })
+										setOpenUpdateForm(true)
+									}}
+									className=''
+								>
+									<FaPen title='edit' />
+								</button>
+								<button onClick={() => deleteContact(id)} className='text-lg'>
+									<FaTrash title='delete' className='fill-rose-600' />
+								</button>
+							</div>
 						</li>
 					))}
 				</ol>
 			</section>
-			<AddContactModal {...{ open: openForm, setOpen: setOpenForm }} />
+			<AddContact {...{ open: openAddForm, setOpen: setOpenAddForm, add: addContact }} />
+			<UpdateContact
+				{...{
+					open: openUpdateForm,
+					setOpen: setOpenUpdateForm,
+					update: updateContact,
+					initialContact: currentContact,
+				}}
+			/>
 		</main>
 	)
-}
-
-const AddContactModal = ({ open, setOpen }) => {
-	return (
-		<dialog open={open} className='bg-gray-700 text-white rounded-md p-4 fixed top-1/4'>
-			<button
-				type='button'
-				title='close'
-				onClick={() => setOpen(false)}
-				className='absolute end-4 text-red-600 text-2xl transition-all duration-100 ease-in-out hover:scale-125'
-			>
-				x
-			</button>
-			<form
-				className='space-y-4'
-				onSubmit={(e) => {
-					e.preventDefault()
-					setOpen(false)
-				}}
-			>
-				<legend className='text-lg font-semibold'>Add Contact</legend>
-				<fieldset className='space-y-3'>
-					<label htmlFor='name' className='flex flex-col-reverse gap-2'>
-						<input type='text' name='name' id='name' required />
-						<span>Name</span>
-					</label>
-					<label htmlFor='name' className='flex flex-col-reverse gap-2'>
-						<input type='email' name='email' id='email' required />
-						<span>Email</span>
-					</label>
-				</fieldset>
-				<button
-					type='submit'
-					className='bg-blue-500 w-full py-2 rounded-md text-white hover:bg-blue-600 transition-all duration-300 ease-in-out font-medium'
-				>
-					Add
-				</button>
-			</form>
-		</dialog>
-	)
-}
-
-AddContactModal.propTypes = {
-	open: PropTypes.bool.isRequired,
-	setOpen: PropTypes.func.isRequired,
 }
 
 export default App
